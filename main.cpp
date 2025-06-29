@@ -4,10 +4,56 @@
 
 using namespace std;
 
+vector<string> split(string& str, char delimiter) {
+    vector<string> result;
+    string current;
+
+    for (char ch : str) {
+        if (ch == delimiter) {
+            result.push_back(current);
+            current.clear();
+        } else {
+            if (ch != ' ')
+                current += ch;
+        }
+    }
+    result.push_back(current);
+    return result;
+}
+
+bool isstring(string& str) {
+    for (char c : str) {
+        if (!isalpha(c)) {
+            return false;
+        }
+    }
+    return !str.empty();
+}
+
 class Interpreter {
 public:
     Interpreter() = default;
-    static float parse(string& expr) {
+
+    map<string, float> variables = map<string, float>();
+
+    static bool isop(char c) {
+        return c=='+' || c=='-' || c=='*' || c=='/';
+    }
+
+    static int precedence(char op) {
+        return op == '+' || op == '-' ? 1 : 2;
+    }
+
+    static float operation(float a, float b, string& op) {
+        switch (op[0]) {
+            case '+': return a + b;
+            case '-': return a - b;
+            case '*': return a * b;
+            case '/': return a / b;
+            default: throw runtime_error("Invalid op");
+        }
+    }
+    float parse(string& expr) {
         vector<string> conv;
         stack<char> ops;
         int i = 0;
@@ -17,6 +63,11 @@ public:
             } else if (isdigit(expr[i])) {
                 size_t j = i;
                 while (j < expr.size() && isdigit(expr[j])) j++;
+                conv.push_back(expr.substr(i, j - i));
+                i = j;
+            } else if (isalpha(expr[i])) {
+                size_t j = i;
+                while (j < expr.size() && isalpha(expr[j])) j++;
                 conv.push_back(expr.substr(i, j - i));
                 i = j;
             } else if (expr[i] == '(') {
@@ -46,7 +97,9 @@ public:
 
         stack<float> res_stack;
         for (auto token : conv) {
-            if (isdigit(token[0])) {
+            if (isstring(token)) {
+                res_stack.push(variables[token]);
+            } else if (isdigit(token[0])) {
                 res_stack.push(stof(token));
             }
             else if (token.size() == 1 && isop(token[0])) {
@@ -58,55 +111,11 @@ public:
 
         return res_stack.top();
     }
-private:
-    static bool isop(char c) {
-        return c=='+' || c=='-' || c=='*' || c=='/';
-    }
-
-    static int precedence(char op) {
-        return op == '+' || op == '-' ? 1 : 2;
-    }
-
-    static float operation(float a, float b, string& op) {
-        switch (op[0]) {
-            case '+': return a + b;
-            case '-': return a - b;
-            case '*': return a * b;
-            case '/': return a / b;
-            default: throw runtime_error("Invalid op");
-        }
-    }
 };
-
-vector<string> split(string& str, char delimiter) {
-    vector<string> result;
-    string current;
-
-    for (char ch : str) {
-        if (ch == delimiter) {
-            result.push_back(current);
-            current.clear();
-        } else {
-            if (ch != ' ')
-                current += ch;
-        }
-    }
-    result.push_back(current);
-    return result;
-}
-
-bool isstring(string& str) {
-    for (char c : str) {
-        if (!isalpha(c)) {
-            return false;
-        }
-    }
-    return !str.empty();
-}
 
 int main() {
     cout << "####Interpreter####" << endl;
-    map<string, float> variables;
+    Interpreter inter = Interpreter();
     while(true) {
         string input;
         getline(cin, input);
@@ -117,18 +126,14 @@ int main() {
 
         switch (codeline.size()) {
             case 1: {
-                if (isstring(codeline[0])) {
-                    cout << variables[codeline[0]] << endl;
-                } else {
-                    cout << Interpreter::parse(codeline[0]) << endl;
-                }
+                cout << inter.parse(codeline[0]) << endl;
                 break;
             }
             case 2: {
                 if (!isstring(codeline[0])) {
                     throw runtime_error("Incorrect variable name");
                 }
-                variables[codeline[0]] = Interpreter::parse(codeline[1]);
+                inter.variables[codeline[0]] = inter.parse(codeline[1]);
                 break;
             }
             default: {
