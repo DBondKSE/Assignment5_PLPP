@@ -44,20 +44,14 @@ public:
     }
 
     static float operation(const float a, const float b, const string& op) {
-        if (op == "+")
-            return a + b;
-        if (op == "-")
-            return a - b;
-        if (op == "*")
-            return a * b;
-        if (op == "/")
-            return a / b;
-        if (op == "max")
-            return max(a,b);
-        if (op == "min")
-            return min(a,b);
-        if (op == "pow")
-            return pow(a,b);
+        return
+        op == "+" ? a + b :
+        op == "-" ? a - b :
+        op == "*" ? a * b :
+        op == "/" ? a / b :
+        op == "max" ? max(a,b) :
+        op == "min" ? min(a,b) :
+        op == "pow" ? pow(a,b) :
         throw runtime_error("Invalid op");
     }
     float parse(const string& expr) {
